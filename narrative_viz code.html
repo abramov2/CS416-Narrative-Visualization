@@ -1,0 +1,306 @@
+<html>
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<script src="https://d3js.org/d3-array.v2.min.js"></script>
+<style> rect {fill: lightblue; stroke: black; }</style>
+<style> circle {fill: lightblue; stroke: black;} </style>
+<body onload='init()'>
+
+<div class="header">
+
+<h1>Comparison of Win Rates for all Champions in League of Legends Patch 13.3 </h1>
+<p>My supercool header test test test test test test test test test test test test test test test test test test test 
+    test test test test test test test test test test test test test test test test test test test test test test test 
+    test test test test test test test test test test test test test test test test test test test test test test test 
+</p>
+
+</div>
+
+<input id="Button" type="button" value="Reset" onclick="functionToExecute();"/>
+
+<script>
+    function functionToExecute() {
+        location.reload()
+    }
+</script>
+
+
+
+<div id="first_graph"></div>
+<div id="second_graph"></div>
+<div id="third_graph"></div>
+
+<script>
+async function init() {
+
+    document.getElementById("Button").disabled = true;
+
+    var margin = {top: 30, right: 30, bottom: 50, left: 60},
+        width = 500 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
+    
+    var svg = d3.select("#first_graph")
+      .append("svg")
+        .attr("width", 1000)
+        .attr("height", 550)
+      .append("g")
+        .attr("transform",
+              "translate(150,50)");
+    
+    // Parse the Data
+    const data = await d3.csv('https://abramov2.github.io/CS416-Narrative-Visualization/lol_data.csv');
+
+
+    var min = d3.min(data, function (d) { return d.Banp; });
+    var max = d3.max(data, function (d) { return d.Banp; });
+    console.log(min,max)
+
+    sums = d3.rollup(data, v => d3.sum(v, d => d.Winp), d => d.Tier)
+    counts = d3.rollup(data, v => v.length, d => d.Tier)
+
+    tier_list = ['D','C','B','A','S','God']
+    
+    var avg_winp_dic = []
+
+    for (var i = 0; i < tier_list.length; i++) {
+        curr = tier_list[i]
+        temp_s = sums.get(curr)
+        temp_c = counts.get(curr)
+        avg = temp_s / temp_c
+        temp_dic = {}
+        temp_dic[curr] = avg
+        avg_winp_dic.push(temp_dic);
+    }
+
+    var mapped = avg_winp_dic.map(d => {
+    return {
+        Tier: Object.keys(d)[0],
+        Winp: d[Object.keys(d)[0]]
+        }
+    });
+
+    var color = ['#58d487','#00cea7','#00c6c2','#00bbd4','#07afd9', '#58a1d4'];
+    
+    //x-axis
+    var x = d3.scaleBand()
+      .range([ 0, width ])
+      .domain(mapped.map(function(d) { return d.Tier; }))
+      .padding(0.2);
+    svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x))
+    svg.append("text")
+        .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom) + ")")
+        .style("text-anchor", "middle")
+        .style("font-size", "20px")  
+        .text("Tier");
+    
+    // y-axis
+    var y = d3.scaleLinear()
+      .domain([0, 60])
+      .range([ height, 0]);
+    svg.append("g")
+      .call(d3.axisLeft(y));
+    svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left)
+        .attr("x",0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("font-size", "20px")  
+        .text("Win Percentage (%)");
+    
+    // bar chart
+    var bar_1 = svg.selectAll("mybar1")
+      .data(mapped)
+      .enter()
+      .append("rect")
+        .attr("x", function(d) { return x(d.Tier); })
+        .attr("y", function(d) { return y(d.Winp*100); })
+        .attr("width", x.bandwidth())
+        .attr("height", function(d) { return height - y(d.Winp*100); })
+        .style("fill", function(d,i) { return color[i]; });
+    svg.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "middle")  
+        .style("font-size", "24px")  
+        .text("Win Percentage (%) vs. Tier for all Champions")
+
+    //When a bar is clicked
+    bar_1.on("click", function(d,i) {
+            document.getElementById("Button").disabled = false;
+
+            color2 = color[i]
+            d3.select("#first_graph").remove();
+
+            //start of second chart 
+            tier = d.Tier
+            data2 = data.filter(function(d) { return d.Tier == tier } )
+
+            var margin2 = {top: 30, right: 30, bottom: 70, left: 60},
+            width2 = 500 - margin2.left - margin2.right,
+            height2 = 500 - margin2.top - margin2.bottom;
+
+            svg2 = d3.select("#second_graph")
+            .append("svg")
+                .attr("width", 1000)
+                .attr("height", 550)
+            .append("g")
+                .attr("transform",
+                    "translate(150,50)");
+
+            role_list = ['TOP','JUNGLE','MID','ADC','SUPPORT']
+
+            sums2 = d3.rollup(data2, v => d3.sum(v, d => d.Winp), d => d.Role)
+            counts2 = d3.rollup(data2, v => v.length, d => d.Role)
+
+            avg_winp_dic_roles = []
+
+            for (var i = 0; i < role_list.length; i++) {
+                curr = role_list[i]
+                temp_s = sums2.get(curr)
+                temp_c = counts2.get(curr)
+                avg = temp_s / temp_c
+                temp_dic = {}
+                temp_dic[curr] = avg
+                avg_winp_dic_roles.push(temp_dic);
+            }
+
+            var mapped2 = avg_winp_dic_roles.map(d => {
+            return {
+                Role: Object.keys(d)[0],
+                Winp: d[Object.keys(d)[0]]
+                }
+            });
+
+            //x-axis
+            var x2 = d3.scaleBand()
+                .range([ 0, width2 ])
+                .domain(mapped2.map(function(d) { return d.Role; }))
+                .padding(0.2);
+            svg2.append("g")
+                .attr("transform", "translate(0," + height2 + ")")
+                .call(d3.axisBottom(x2))
+            svg2.append("text")
+                .attr("transform", "translate(" + (width2 / 2) + " ," + (height2 + margin2.bottom) + ")")
+                .style("text-anchor", "middle")
+                .style("font-size", "20px")  
+                .text("Role");
+            
+            // y-axis
+            var y2 = d3.scaleLinear()
+                .domain([0, 60])
+                .range([ height2, 0]);
+            svg2.append("g")
+                .call(d3.axisLeft(y2));
+            svg2.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin2.left)
+                .attr("x",0 - (height2 / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .style("font-size", "20px")  
+                .text("Win Percentage (%)");
+            
+            //second bar chart
+            var bar_2 = svg2.selectAll("mybar2")
+            .data(mapped2)
+            .enter()
+            .append("rect")
+                .attr("x", function(d) { return x2(d.Role); })
+                .attr("y", function(d) { return y2(d.Winp*100); })
+                .attr("width", x2.bandwidth())
+                .attr("height", function(d) { return height2 - y2(d.Winp*100); })
+                .style("fill",  color2);
+            svg2.append("text")
+                .attr("x", (width2 / 2))             
+                .attr("y", 0 - (margin2.top / 2))
+                .attr("text-anchor", "middle")  
+                .style("font-size", "24px")  
+                .text(function(d) { return "Win Percentage (%) vs. Role for " + tier + " Tier Champions"; });
+            //
+            //
+            //
+            //
+            //
+            //
+            //
+            // Clicking on second graph
+            bar_2.on("click", function(d,i) {
+                document.getElementById("Button").disabled = false;
+
+                d3.select("#second_graph").remove();
+
+                //start of third chart 
+
+                role = d.Role
+                data3 = data2.filter(function(d) { return d.Role == role } )
+
+                var margin3 = {top: 30, right: 30, bottom: 70, left: 60},
+                width3 = 1000 - margin3.left - margin3.right,
+                height3 = 500 - margin3.top - margin3.bottom;
+
+                var svg3 = d3.select("#third_graph")
+                .append("svg")
+                    .attr("width", 1200)
+                    .attr("height", 550)
+                .append("g")
+                    .attr("transform",
+                        "translate(150,50)");
+
+                //x-axis
+                var x3 = d3.scaleLinear()
+                    .range([ 0, width3 ])
+                    .domain([0,50])
+                svg3.append("g")
+                    .attr("transform", "translate(0," + height3 + ")")
+                    .call(d3.axisBottom(x3))
+                svg3.append("text")
+                    .attr("transform", "translate(" + (width3 / 2) + " ," + (height3 + margin3.bottom) + ")")
+                    .style("text-anchor", "middle")
+                    .style("font-size", "20px")  
+                    .text("Ban Percentage (%)");
+                
+                // y-axis
+                var y3 = d3.scaleLinear()
+                    .domain([40, 60])
+                    .range([ height3, 0]);
+                svg3.append("g")
+                    .call(d3.axisLeft(y3));
+                svg3.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin3.left)
+                    .attr("x",0 - (height3 / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .style("font-size", "20px")  
+                    .text("Win Percentage (%)");
+
+                //third chart
+                var scatter = svg3.selectAll("myscatter")
+                .data(data3)
+                .enter()
+                .append('circle')
+                    .attr('cx',function(d,i) { return x3(+(d.Banp*100)); })
+                    .attr('cy',function(d,i) { return y3(+(d.Winp*100)); })
+                    .attr('r',10);
+                svg3.append("text")
+                    .attr("x", (width3 / 2))             
+                    .attr("y", 0 - (margin3.top / 2))
+                    .attr("text-anchor", "middle")  
+                    .style("font-size", "20px")  
+                    .text(function(d) { return "Win Percentage (%) vs. Ban Percentage(%) for " + role + " in the " + tier + " Tier"; });
+                
+            });
+
+
+            });
+    
+}
+</script>
+</body>
+</html>
+
+<!-- first will be bar chart with overall win rates by tier -->
+<!-- next will be bar chart with win rates filtered by the tier clicked on and by each role -->
+<!-- last will be a scatter plot with win rate and ban rate filtered on the role and tier -->

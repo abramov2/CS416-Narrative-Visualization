@@ -18,13 +18,13 @@
     .btn {
         font-size: 20px;
         position: absolute;
-        margin-left: 1250px;
+        margin-left: 1300px;
         margin-top: -15px;
     }
     .words {
-        font-size: 20px;
+        font-size: 24px;
         position: absolute;
-        width: 100%;
+        text-align: left;
     }
 
 </style>
@@ -38,30 +38,56 @@
 
 <div 
 id="first_graph">
-<p id = "text1" class = "words"> </p>
+<p id = "text1" class = "words" > 
+
+    In this visualization you can explore the effects of <br> different filters on the win 
+    rate for champions in <br> League of Legends for patch 13.3. The win percentage <br> is shown on the y-axis as a 
+    percent and the x-axis has different <br> tiers
+    that classify how good a champion is in the game. This <br> bar chart is interactive and clicking on a specific bar will 
+    <br> then create another bar chart with only champions within <br> that Tier. If you ever want to restart your search, the <br>
+    <b>RESET</b> button will take you back to the first bar chart. <br> There are numerous paths that one can take so " 
+    feel <br> free to check out as many as you like. The main goal <br> of this visualization is to compare the win rates of different 
+    <br> categories of champions within the game and to let the user <br> decide what categories they want to dive into more.
+
+
+</p>
 </div>
 
 <div 
 id="second_graph">
-<p id = "text2" class = "words"></p>
+<p id = "text2" class = "words">
+
+    This visualization contains a bar chart which is filtered on your <br> selected tier shown in the title of the plot.
+    It seperates each tier <br> by specific roles in the game on the x-axis and contains the <br> win percentage for each role on the 
+    y-axis. The difference <br> in win rate for each role changes with each tier so feel <br> free to restart by clicking the <b>RESET</b>
+    button and explore <br> the other options.
+    Additionally, clicking on a role will <br> bring up a scatter plot of all the champions within that role <br> and tier along with
+    their win rates and ban rates. This <br> visualization is meant to show how each role can affect <br> the game differently as 
+    some roles are not as strong as <br> others while in other cases the roles are shown to be more <br> balanced.
+
+</p>
 </div>
 
 <div 
 id="third_graph">
-<p id = "text3" class = "words"></p>
+<p id = "text3" class = "words">
+
+    This is the final graph in your chosen path and it contains a <br> scatter plot of all the champions within the tier and role 
+    that <br> were selected. Here, you can hover over any of the data points <br> and see more information about the champion. 
+    Additionally, <br> the annotation highlights which champion has the highest <br>
+    winrate and you can use this to compare it to the other <br> champions in the scatter plot to see different 
+    trends in the <br> win rate and ban rate of champions. When you want to <br> restart,
+    click the button in the top right that says reset <br> and you can restart your search. Finally, pay attention
+    to <br> the range of the x-axis as it scales with the champion with <br> the highest ban rate to ensure the data 
+    is not too squished <br> together.
+
+</p>
 </div>
 
 <script>
 async function init() {
 
     document.getElementById("Button").disabled = true;
-    var text1 = document.getElementById("text1")
-    text1.innerText = "In this visualization you can explore the effects of different filters on the \n win" 
-    +" rate for champions in League of Legends for patch 13.3. The win percentage \n is shown on the y-axis as a percent and the x-axis has different tiers that \n classify how good a champion is "
-    + "\n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH "
-    + "\n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH "
-    + "\n BLAHBLAH \n BLAHBLAH \n BLAH"
-
 
     var margin = {top: 30, right: 30, bottom: 50, left: 60},
         width = 700 - margin.left - margin.right,
@@ -149,6 +175,13 @@ async function init() {
         .attr("text-anchor", "middle")  
         .style("font-size", "24px")  
         .text("Win Percentage (%) vs. Tier for all Champions")
+    svg.append("g").selectAll("#mybar1").data(mapped).enter()
+        .append("text")
+        .attr("x", function(d) { return x(d.Tier) + 20; })
+        .attr("y", function(d) { return y(d.Winp*100) - 10; })
+        .text(function(d) { return d3.format(".2f")(+d.Winp*100) + "%"; } );
+
+    
 
     //When a bar is clicked
     bar_1.on("click", function(d,i) {
@@ -242,6 +275,17 @@ async function init() {
                 .attr("text-anchor", "middle")  
                 .style("font-size", "24px")  
                 .text(function(d) { return "Win Percentage (%) vs. Role for " + tier + " Tier Champions"; });
+            svg2.append("g").selectAll("#mybar2").data(mapped2).enter()
+                .append("text")
+                .attr("x", function(d) { return x2(d.Role) + 20; })
+                .attr("y", function(d) { return y2(d.Winp*100) - 10; })
+                .text(function(d) { 
+                    if (!d.Winp) {
+                        return ""
+                    }
+                    return d3.format(".2f")(+d.Winp*100) + "%"; 
+                
+                } );
             //
             //
             //
@@ -260,7 +304,7 @@ async function init() {
                 role = d.Role
                 data3 = data2.filter(function(d) { return d.Role == role } )
 
-                var margin3 = {top: 30, right: 30, bottom: 70, left: 60},
+                var margin3 = {top: 80, right: 30, bottom: 70, left: 60},
                 width3 = 800 - margin3.left - margin3.right,
                 height3 = 500 - margin3.top - margin3.bottom;
 
@@ -270,12 +314,20 @@ async function init() {
                     .attr("height", 550)
                 .append("g")
                     .attr("transform",
-                        "translate(650,50)");
+                        "translate(640,70)");
 
                 //x-axis
+                var max_ban = d3.max(data3, function(d) { return +d.Banp;} );
                 var x3 = d3.scaleLinear()
-                    .range([ 0, width3 ])
-                    .domain([0,50])
+                    .range([ 0, width3 -10 ])
+                    .domain([0,max_ban*100 + 10])
+                if (role == "MID") {
+                    if (tier == "God") {
+                        x3 = d3.scaleLinear()
+                            .range([ 0, width3-70 ])
+                            .domain([0,70])
+                    }
+                }
                 svg3.append("g")
                     .attr("transform", "translate(0," + height3 + ")")
                     .call(d3.axisBottom(x3))
@@ -319,12 +371,13 @@ async function init() {
                             color: ["black"],
                             x: x3(max_win_x*100),
                             y: y3(max_win_y*100),
-                            dy: 50,
-                            dx: 50
+                            dy: -5,
+                            dx: 40,
+                            fill: "none"
                         }
                         ];
                     
-
+                    console.log(data3)
                     // Add annotation to the chart
                     const makeAnnotations = d3.annotation().annotations(annotations);
 

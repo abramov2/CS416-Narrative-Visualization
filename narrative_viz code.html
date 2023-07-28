@@ -47,12 +47,7 @@ async function init() {
               "translate(150,50)");
     
     // Parse the Data
-    const data = await d3.csv('https://github.com/abramov2/CS416-Narrative-Visualization/lol_data.csv');
-
-
-    var min = d3.min(data, function (d) { return d.Banp; });
-    var max = d3.max(data, function (d) { return d.Banp; });
-    console.log(min,max)
+    const data = await d3.csv('https://abramov2.github.io/CS416-Narrative-Visualization/lol_data.csv');
 
     sums = d3.rollup(data, v => d3.sum(v, d => d.Winp), d => d.Tier)
     counts = d3.rollup(data, v => v.length, d => d.Tier)

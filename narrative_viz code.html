@@ -1,6 +1,7 @@
 <html>
 <script src='https://d3js.org/d3.v5.min.js'></script>
 <script src="https://d3js.org/d3-array.v2.min.js"></script>
+<script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
 <style> rect {fill: lightblue; stroke: black; }</style>
 <style> circle {fill: lightblue; stroke: black;} </style>
 <body onload='init()'>
@@ -8,14 +9,26 @@
 <div class="header">
 
 <h1>Comparison of Win Rates for all Champions in League of Legends Patch 13.3 </h1>
-<p>My supercool header test test test test test test test test test test test test test test test test test test test 
-    test test test test test test test test test test test test test test test test test test test test test test test 
-    test test test test test test test test test test test test test test test test test test test test test test test 
-</p>
 
 </div>
 
-<input id="Button" type="button" value="Reset" onclick="functionToExecute();"/>
+<input id="Button" class = btn type="button" value="Reset" onclick="functionToExecute();"/>
+
+<style>
+    .btn {
+        font-size: 20px;
+        position: absolute;
+        margin-left: 1250px;
+        margin-top: -15px;
+    }
+    .words {
+        font-size: 20px;
+        position: absolute;
+        width: 100%;
+    }
+
+</style>
+
 
 <script>
     function functionToExecute() {
@@ -23,28 +36,44 @@
     }
 </script>
 
+<div 
+id="first_graph">
+<p id = "text1" class = "words"> </p>
+</div>
 
+<div 
+id="second_graph">
+<p id = "text2" class = "words"></p>
+</div>
 
-<div id="first_graph"></div>
-<div id="second_graph"></div>
-<div id="third_graph"></div>
+<div 
+id="third_graph">
+<p id = "text3" class = "words"></p>
+</div>
 
 <script>
 async function init() {
 
     document.getElementById("Button").disabled = true;
+    var text1 = document.getElementById("text1")
+    text1.innerText = "In this visualization you can explore the effects of different filters on the \n win" 
+    +" rate for champions in League of Legends for patch 13.3. The win percentage \n is shown on the y-axis as a percent and the x-axis has different tiers that \n classify how good a champion is "
+    + "\n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH "
+    + "\n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH \n BLAHBLAH "
+    + "\n BLAHBLAH \n BLAHBLAH \n BLAH"
+
 
     var margin = {top: 30, right: 30, bottom: 50, left: 60},
-        width = 500 - margin.left - margin.right,
+        width = 700 - margin.left - margin.right,
         height = 500 - margin.top - margin.bottom;
     
     var svg = d3.select("#first_graph")
       .append("svg")
-        .attr("width", 1000)
+        .attr("width", 1300)
         .attr("height", 550)
       .append("g")
         .attr("transform",
-              "translate(150,50)");
+              "translate(650,50)");
     
     // Parse the Data
     const data = await d3.csv('https://abramov2.github.io/CS416-Narrative-Visualization/lol_data.csv');
@@ -133,16 +162,16 @@ async function init() {
             data2 = data.filter(function(d) { return d.Tier == tier } )
 
             var margin2 = {top: 30, right: 30, bottom: 70, left: 60},
-            width2 = 500 - margin2.left - margin2.right,
+            width2 = 700 - margin2.left - margin2.right,
             height2 = 500 - margin2.top - margin2.bottom;
 
             svg2 = d3.select("#second_graph")
             .append("svg")
-                .attr("width", 1000)
+                .attr("width", 1300)
                 .attr("height", 550)
             .append("g")
                 .attr("transform",
-                    "translate(150,50)");
+                    "translate(650,50)");
 
             role_list = ['TOP','JUNGLE','MID','ADC','SUPPORT']
 
@@ -232,16 +261,16 @@ async function init() {
                 data3 = data2.filter(function(d) { return d.Role == role } )
 
                 var margin3 = {top: 30, right: 30, bottom: 70, left: 60},
-                width3 = 1000 - margin3.left - margin3.right,
+                width3 = 800 - margin3.left - margin3.right,
                 height3 = 500 - margin3.top - margin3.bottom;
 
                 var svg3 = d3.select("#third_graph")
                 .append("svg")
-                    .attr("width", 1200)
+                    .attr("width", 1300)
                     .attr("height", 550)
                 .append("g")
                     .attr("transform",
-                        "translate(150,50)");
+                        "translate(650,50)");
 
                 //x-axis
                 var x3 = d3.scaleLinear()
@@ -271,6 +300,34 @@ async function init() {
                     .style("font-size", "20px")  
                     .text("Win Percentage (%)");
 
+                    
+                    var max_win_y = d3.max(data3, function(d) { return +d.Winp;} );
+                    var temp = data3.filter(function(d) { return d.Winp == max_win_y } );
+                    var max_win_x = temp[0].Banp
+
+                    const annotations = [
+                        {
+                            note: {
+                                label: "This champion has the highest win rate in the filtered data",
+                                title: "Highest Win Rate"
+                            },
+                            type: d3.annotationCalloutCircle,
+                            subject: {
+                                radius: 15,        
+                                radiusPadding: 20  
+                            },
+                            color: ["black"],
+                            x: x3(max_win_x*100),
+                            y: y3(max_win_y*100),
+                            dy: 50,
+                            dx: 50
+                        }
+                        ];
+                    
+
+                    // Add annotation to the chart
+                    const makeAnnotations = d3.annotation().annotations(annotations);
+
                 //third chart
                 var scatter = svg3.selectAll("myscatter")
                 .data(data3)
@@ -278,7 +335,21 @@ async function init() {
                 .append('circle')
                     .attr('cx',function(d,i) { return x3(+(d.Banp*100)); })
                     .attr('cy',function(d,i) { return y3(+(d.Winp*100)); })
-                    .attr('r',10);
+                    .attr('r',10)
+                    .style('fill', color2)
+                    .append("svg:title")
+                    .text(function(d) { 
+                        var name = "Name: " + d.Name 
+                        var clas = "Class: " + d.Class
+                        var kda = "KDA: " + d.KDA
+                        var pickp = "Pick %: " + d.Pickp * 100 + "%"
+                        var winp = "Win %: " + d.Winp * 100 + "%"
+                        var banp = "Ban %: " + d.Banp * 100 + "%"
+                        return name + "\n" + clas + "\n" + kda + "\n" + pickp + "\n" + winp + "\n" + banp; 
+                    });
+                svg3.append("g")
+                    .call(makeAnnotations)
+                    .attr('fill', "none");
                 svg3.append("text")
                     .attr("x", (width3 / 2))             
                     .attr("y", 0 - (margin3.top / 2))
